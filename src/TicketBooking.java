@@ -260,13 +260,13 @@ public class TicketBooking extends javax.swing.JFrame {
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
-  private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+
+private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
     int price = 0;
     int quantity;
     String jenisTiket = null;
-    int kapasitas = 0;
 
-    // Validasi input jumlah tiket (harus berupa angka)
+    // Validasi input jumlah tiket
     try {
         quantity = Integer.parseInt(jTextField3.getText());
     } catch (NumberFormatException e) {
@@ -274,24 +274,14 @@ public class TicketBooking extends javax.swing.JFrame {
         return;
     }
 
-    // Mengambil kapasitas berdasarkan pilihan ruangan di jComboBox2
+    // Mengambil ruangan yang dipilih
     String selectedRoom = (String) jComboBox2.getSelectedItem();
-    switch (selectedRoom) {
-        case "C-102":
-            kapasitas = 50;
-            break;
-        case "HH-101":
-            kapasitas = 75;
-            break;
-        case "SAW":
-            kapasitas = 100;
-            break;
-        case "PASCA":
-            kapasitas = 30;
-            break;
-        default:
-            JOptionPane.showMessageDialog(null, "Silakan pilih ruangan!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+
+    // Ambil kapasitas terakhir dari database
+    int kapasitas = getKapasitasTerakhir(selectedRoom);
+    if (kapasitas < 0) {
+        JOptionPane.showMessageDialog(null, "Error saat mengambil kapasitas ruangan dari database!", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
     }
 
     // Validasi apakah jumlah tiket yang dibeli melebihi kapasitas ruangan
@@ -321,23 +311,14 @@ public class TicketBooking extends javax.swing.JFrame {
 
     // Dapatkan informasi tambahan untuk diteruskan ke CetakTicket
     String nama = jTextField1.getText();
-
-    // Mengambil film yang dipilih
-    String film = null;
-    if (filmGroup.getSelection() != null) {
-        film = filmGroup.getSelection().getActionCommand();
-    } else {
-        JOptionPane.showMessageDialog(null, "Silakan pilih film yang ingin ditonton!", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
+    String film = filmGroup.getSelection().getActionCommand();
 
     // Menghitung sisa kapasitas
     int sisaKapasitas = kapasitas - quantity;
 
-    // **Bagian yang diintegrasikan: Insert data ke dalam database**
+    // **Insert data ke dalam database**
     try {
-        // Buat query SQL untuk memasukkan data ke dalam tabel
-        String query = "INSERT INTO ticket_booking (name, film, ticket_type, show_time, price, quantity, total, room) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO ticket_booking (name, film, ticket_type, show_time, price, quantity, total, room, remaining_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement pst = conn.prepareStatement(query);
 
         // Mengisi parameter dari input pengguna
@@ -349,20 +330,73 @@ public class TicketBooking extends javax.swing.JFrame {
         pst.setInt(6, quantity);
         pst.setInt(7, total);
         pst.setString(8, selectedRoom);
+        pst.setInt(9, sisaKapasitas); // Menyimpan sisa kapasitas
 
         // Menjalankan query insert
         pst.executeUpdate();
         JOptionPane.showMessageDialog(null, "Data berhasil disimpan ke database!");
 
+        // Update remaining_capacity di tabel
+        updateRemainingCapacity(selectedRoom, sisaKapasitas);
+
     } catch (SQLException e) {
         JOptionPane.showMessageDialog(null, "Error saat menyimpan data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    // **Bagian lanjutan dari logika sebelumnya: Menampilkan form CetakTicket**
+    // Menampilkan form CetakTicket
     CetakTicket cetakTicket = new CetakTicket(nama, film, jenisTiket, quantity, total, selectedRoom, sisaKapasitas);
     cetakTicket.setVisible(true);
     this.dispose();
 }
+
+// Method untuk mendapatkan kapasitas terakhir dari database
+private int getKapasitasTerakhir(String room) {
+    int kapasitas = -1;
+    try {
+        String query = "SELECT remaining_capacity FROM ticket_booking WHERE room = ? ORDER BY id DESC LIMIT 1";
+        PreparedStatement pst = conn.prepareStatement(query);
+        pst.setString(1, room);
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            kapasitas = rs.getInt("remaining_capacity");
+        } else {
+            // Jika belum ada data, kembalikan nilai default
+            switch (room) {
+                case "C-102":
+                    kapasitas = 50;
+                    break;
+                case "HH-101":
+                    kapasitas = 75;
+                    break;
+                case "SAW":
+                    kapasitas = 100;
+                    break;
+                case "PASCA":
+                    kapasitas = 30;
+                    break;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return kapasitas;
+}
+
+// Method untuk memperbarui remaining_capacity di database
+private void updateRemainingCapacity(String room, int remainingCapacity) {
+    try {
+        String query = "UPDATE ticket_booking SET remaining_capacity = ? WHERE room = ? ORDER BY id DESC LIMIT 1";
+        PreparedStatement pst = conn.prepareStatement(query);
+        pst.setInt(1, remainingCapacity);
+        pst.setString(2, room);
+        pst.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+
+
 
 
 

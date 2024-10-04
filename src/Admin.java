@@ -145,6 +145,7 @@ public class Admin extends javax.swing.JFrame {
         model.addColumn("Total");
         model.addColumn("Ruangan");
         model.addColumn("Waktu Tayang");
+        model.addColumn("Sisa Kapasitas");
 
         while (resultSet.next()) {
             model.addRow(new Object[]{
@@ -154,7 +155,8 @@ public class Admin extends javax.swing.JFrame {
                 resultSet.getInt("quantity"), // Sesuai dengan kolom di tabel
                 resultSet.getInt("total"), // Sesuai dengan kolom di tabel
                 resultSet.getString("room"), // Sesuai dengan kolom di tabel
-                resultSet.getString("show_time") // Sesuai dengan kolom di tabel
+                resultSet.getString("show_time"), // Sesuai dengan kolom di tabel
+                resultSet.getString("Remaining_capacity"),
             });
         }
 
