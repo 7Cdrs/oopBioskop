@@ -42,14 +42,11 @@ public class login extends javax.swing.JFrame {
 
         jLabel3.setText("password");
 
-        jTextField1.setText("Anas");
         jTextField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField1ActionPerformed(evt);
             }
         });
-
-        jPasswordField1.setText("jPasswordField1");
 
         jButton1.setText("login ");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -119,20 +116,40 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        String username = jTextField1.getText();
-        String password = new String(jPasswordField1.getPassword());
+         String username = jTextField1.getText();
+         String password = new String(jPasswordField1.getPassword());
 
-    // Simple validation (example: username "Anas" and password "12345")
-    if (username.equals("Anas") && password.equals("12345")) {
-        // If login is successful, open TicketBooking and close login
-        TicketBooking ticketBooking = new TicketBooking(); // Assumes TicketBooking is the class for the next form
-        ticketBooking.setVisible(true); // Show TicketBooking form
-        
-        // Close the login form
-        this.dispose();
-    } else {
-        // If login fails, show an error message
-        javax.swing.JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", javax.swing.JOptionPane.ERROR_MESSAGE);
+    // Database connection
+    String url = "jdbc:postgresql://localhost:5432/Java"; // Database name
+    String user = "postgres"; // Your PostgreSQL username
+    String pass = "hazelray"; // Your PostgreSQL password
+    
+    try (java.sql.Connection conn = java.sql.DriverManager.getConnection(url, user, pass)) {
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password); // Assuming the password is stored as plain text for now; adjust if hashed.
+
+            java.sql.ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                // Login berhasil
+                String role = rs.getString("role"); // Ambil role pengguna
+                if ("admin".equals(role)) {
+                    Admin adminPanel = new Admin(); // Buka Admin.java
+                    adminPanel.setVisible(true);
+                } else {
+                    TicketBooking ticketBooking = new TicketBooking(); // Buka TicketBooking.java
+                    ticketBooking.setVisible(true);
+                }
+                this.dispose(); // Tutup form login
+            } else {
+                // Login failed
+                javax.swing.JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    } catch (java.sql.SQLException e) {
+        e.printStackTrace();
+        javax.swing.JOptionPane.showMessageDialog(this, "Error connecting to database: " + e.getMessage());
     }
     }//GEN-LAST:event_jButton1ActionPerformed
 

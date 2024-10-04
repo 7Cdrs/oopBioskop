@@ -12,6 +12,11 @@ import javax.swing.JComboBox;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JOptionPane;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 
 /**
@@ -21,7 +26,9 @@ import javax.swing.JOptionPane;
 public class TicketBooking extends javax.swing.JFrame {
   private ButtonGroup filmGroup; // Untuk radio button film
     private ButtonGroup ticketTypeGroup; // Untuk radio button jenis tiket
-    
+     
+    private Connection conn;  // Tambahkan variabel koneksi
+
     // HashMap untuk menyimpan sisa kapasitas setiap ruangan
     private Map<String, Integer> roomCapacities;
     
@@ -31,6 +38,8 @@ public class TicketBooking extends javax.swing.JFrame {
         filmGroup = new ButtonGroup();
         ticketTypeGroup = new ButtonGroup();
 
+         // Panggil method untuk koneksi ke database
+            connectToDatabase();
         // Mengelompokkan radio button film
         filmGroup.add(jRadioButton1); // EndGame
         jRadioButton1.setActionCommand("EndGame"); // Menetapkan ActionCommand untuk film EndGame
@@ -113,7 +122,6 @@ public class TicketBooking extends javax.swing.JFrame {
 
         jLabel6.setText("Jumlah Beli");
 
-        jTextField1.setText("Anas");
         jTextField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField1ActionPerformed(evt);
@@ -252,7 +260,7 @@ public class TicketBooking extends javax.swing.JFrame {
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
-        private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+  private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
     int price = 0;
     int quantity;
     String jenisTiket = null;
@@ -326,11 +334,36 @@ public class TicketBooking extends javax.swing.JFrame {
     // Menghitung sisa kapasitas
     int sisaKapasitas = kapasitas - quantity;
 
-    // Menampilkan form CetakTicket dengan informasi yang telah dihitung
+    // **Bagian yang diintegrasikan: Insert data ke dalam database**
+    try {
+        // Buat query SQL untuk memasukkan data ke dalam tabel
+        String query = "INSERT INTO ticket_booking (name, film, ticket_type, show_time, price, quantity, total, room) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement pst = conn.prepareStatement(query);
+
+        // Mengisi parameter dari input pengguna
+        pst.setString(1, nama);
+        pst.setString(2, film);
+        pst.setString(3, jenisTiket);
+        pst.setString(4, jComboBox1.getSelectedItem().toString());
+        pst.setInt(5, price);
+        pst.setInt(6, quantity);
+        pst.setInt(7, total);
+        pst.setString(8, selectedRoom);
+
+        // Menjalankan query insert
+        pst.executeUpdate();
+        JOptionPane.showMessageDialog(null, "Data berhasil disimpan ke database!");
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error saat menyimpan data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    // **Bagian lanjutan dari logika sebelumnya: Menampilkan form CetakTicket**
     CetakTicket cetakTicket = new CetakTicket(nama, film, jenisTiket, quantity, total, selectedRoom, sisaKapasitas);
     cetakTicket.setVisible(true);
     this.dispose();
 }
+
 
 
 
@@ -393,4 +426,22 @@ public class TicketBooking extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
     // End of variables declaration//GEN-END:variables
+
+    // Method untuk menghubungkan ke database
+   private void connectToDatabase() {
+    try {
+        // URL database (sesuaikan dengan konfigurasi Anda)
+        String url = "jdbc:postgresql://localhost:5432/Java"; 
+        String username = "postgres";
+        String password = "hazelray";
+
+        // Membuat koneksi
+        conn = DriverManager.getConnection(url, username, password);
+        System.out.println("Koneksi ke database berhasil!");
+    } catch (SQLException e) {
+        // Jika terjadi error koneksi
+        JOptionPane.showMessageDialog(null, "Koneksi ke database gagal: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
 }
