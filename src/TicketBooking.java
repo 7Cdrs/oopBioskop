@@ -274,19 +274,20 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
         return;
     }
 
-    // Mengambil ruangan yang dipilih
+    // Mengambil ruangan dan waktu tayang yang dipilih
     String selectedRoom = (String) jComboBox2.getSelectedItem();
+    String selectedTime = (String) jComboBox1.getSelectedItem();
 
-    // Ambil kapasitas terakhir dari database
-    int kapasitas = getKapasitasTerakhir(selectedRoom);
+    // Ambil kapasitas terakhir berdasarkan ruangan dan waktu tayang dari database
+    int kapasitas = getKapasitasTerakhir(selectedRoom, selectedTime);
     if (kapasitas < 0) {
         JOptionPane.showMessageDialog(null, "Error saat mengambil kapasitas ruangan dari database!", "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
-    // Validasi apakah jumlah tiket yang dibeli melebihi kapasitas ruangan
+    // Validasi apakah jumlah tiket yang dibeli melebihi kapasitas ruangan pada waktu tersebut
     if (quantity > kapasitas) {
-        JOptionPane.showMessageDialog(null, "Jumlah tiket melebihi kapasitas ruangan! Kapasitas: " + kapasitas, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, "Jumlah tiket melebihi kapasitas ruangan untuk waktu " + selectedTime + "! Kapasitas: " + kapasitas, "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
@@ -325,7 +326,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
         pst.setString(1, nama);
         pst.setString(2, film);
         pst.setString(3, jenisTiket);
-        pst.setString(4, jComboBox1.getSelectedItem().toString());
+        pst.setString(4, selectedTime);
         pst.setInt(5, price);
         pst.setInt(6, quantity);
         pst.setInt(7, total);
@@ -337,7 +338,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
         JOptionPane.showMessageDialog(null, "Data berhasil disimpan ke database!");
 
         // Update remaining_capacity di tabel
-        updateRemainingCapacity(selectedRoom, sisaKapasitas);
+        updateRemainingCapacity(selectedRoom, selectedTime, sisaKapasitas);
 
     } catch (SQLException e) {
         JOptionPane.showMessageDialog(null, "Error saat menyimpan data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -349,18 +350,19 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
     this.dispose();
 }
 
-// Method untuk mendapatkan kapasitas terakhir dari database
-private int getKapasitasTerakhir(String room) {
+// Method untuk mendapatkan kapasitas terakhir dari database berdasarkan ruangan dan waktu tayang
+private int getKapasitasTerakhir(String room, String showTime) {
     int kapasitas = -1;
     try {
-        String query = "SELECT remaining_capacity FROM ticket_booking WHERE room = ? ORDER BY id DESC LIMIT 1";
+        String query = "SELECT remaining_capacity FROM ticket_booking WHERE room = ? AND show_time = ? ORDER BY id DESC LIMIT 1";
         PreparedStatement pst = conn.prepareStatement(query);
         pst.setString(1, room);
+        pst.setString(2, showTime);
         ResultSet rs = pst.executeQuery();
         if (rs.next()) {
             kapasitas = rs.getInt("remaining_capacity");
         } else {
-            // Jika belum ada data, kembalikan nilai default
+            // Jika belum ada data, kembalikan nilai default kapasitas
             switch (room) {
                 case "C-102":
                     kapasitas = 50;
@@ -382,18 +384,20 @@ private int getKapasitasTerakhir(String room) {
     return kapasitas;
 }
 
-// Method untuk memperbarui remaining_capacity di database
-private void updateRemainingCapacity(String room, int remainingCapacity) {
+// Method untuk memperbarui remaining_capacity di database berdasarkan ruangan dan waktu tayang
+private void updateRemainingCapacity(String room, String showTime, int remainingCapacity) {
     try {
-        String query = "UPDATE ticket_booking SET remaining_capacity = ? WHERE room = ? ORDER BY id DESC LIMIT 1";
+        String query = "UPDATE ticket_booking SET remaining_capacity = ? WHERE room = ? AND show_time = ? ORDER BY id DESC LIMIT 1";
         PreparedStatement pst = conn.prepareStatement(query);
         pst.setInt(1, remainingCapacity);
         pst.setString(2, room);
+        pst.setString(3, showTime);
         pst.executeUpdate();
     } catch (SQLException e) {
         e.printStackTrace();
     }
 }
+
 
 
 
