@@ -35,6 +35,7 @@ public class Admin extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -53,6 +54,13 @@ public class Admin extends javax.swing.JFrame {
 
         jLabel1.setText("Admin Dashboard");
 
+        jButton1.setText("Delete");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -64,6 +72,10 @@ public class Admin extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 608, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addGap(86, 86, 86))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -72,11 +84,63 @@ public class Admin extends javax.swing.JFrame {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(134, 134, 134))
+                .addGap(66, 66, 66)
+                .addComponent(jButton1)
+                .addGap(45, 45, 45))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+     // Event handler "ActionPerformed" untuk tombol "Delete"
+
+    private void ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ActionPerformed
+        // TODO add your handling code here:
+        
+         // Mendapatkan baris yang dipilih
+        int selectedRow = jTable1.getSelectedRow();
+        
+        if (selectedRow != -1) { // Pastikan ada baris yang dipilih
+            // Konfirmasi sebelum menghapus
+            int confirmation = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Penghapusan", JOptionPane.YES_NO_OPTION);
+            
+            if (confirmation == JOptionPane.YES_OPTION) {
+                // Ambil nilai dari kolom yang dibutuhkan sebagai identifikasi
+                String nama = jTable1.getValueAt(selectedRow, 0).toString();
+                String film = jTable1.getValueAt(selectedRow, 1).toString();
+                String jenisTiket = jTable1.getValueAt(selectedRow, 2).toString();
+                String showTime = jTable1.getValueAt(selectedRow, 6).toString();
+                
+                // Menghapus data dari database berdasarkan kolom 'name', 'film', 'ticket_type', dan 'show_time'
+                try {
+                    String query = "DELETE FROM ticket_booking WHERE name = ? AND film = ? AND ticket_type = ? AND show_time = ?";
+                    java.sql.PreparedStatement pst = connection.prepareStatement(query);
+                    pst.setString(1, nama);
+                    pst.setString(2, film);
+                    pst.setString(3, jenisTiket);
+                    pst.setString(4, showTime);
+                    
+                    int rowsAffected = pst.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        // Menghapus baris dari tabel setelah berhasil menghapus dari database
+                        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+                        model.removeRow(selectedRow); // Hapus baris dari tabel
+                        JOptionPane.showMessageDialog(this, "Data berhasil dihapus!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Gagal menghapus data!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(this, "Error saat menghapus data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            
+        } else {
+            JOptionPane.showMessageDialog(this, "Pilih data yang ingin dihapus!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -114,6 +178,7 @@ public class Admin extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
