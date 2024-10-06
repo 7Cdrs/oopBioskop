@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
-import com.formdev.flatlaf.FlatLightLaf; // Import untuk FlatDarkLaf
+import com.formdev.flatlaf.FlatDarkLaf; // Import untuk FlatDarkLaf
 import javax.swing.UIManager; // Import untuk UIManager
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -132,7 +132,7 @@ public class Admin extends javax.swing.JFrame {
    public static void main(String args[]) {
     /* Set the FlatDark look and feel */
     try {
-        UIManager.setLookAndFeel(new FlatLightLaf());
+        UIManager.setLookAndFeel(new FlatDarkLaf());
     } catch (Exception e) {
         e.printStackTrace();
     }
